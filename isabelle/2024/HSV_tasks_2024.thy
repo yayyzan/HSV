@@ -1,8 +1,8 @@
 theory HSV_tasks_2024 imports Main begin
 
-section \<open> Task 1: Extending our circuit synthesiser with NAND gates. \<close>
+section ‹ Task 1: Extending our circuit synthesiser with NAND gates. ›
 
-text \<open> Datatype for representing simple circuits, extended with NAND gates. \<close>
+text ‹ Datatype for representing simple circuits, extended with NAND gates. ›
 datatype "circuit" = 
   NOT "circuit"
 | AND "circuit" "circuit"
@@ -12,21 +12,21 @@ datatype "circuit" =
 | FALSE
 | INPUT "int"
 
-text \<open> Simulates a circuit given a valuation for each input wire. \<close>
+text ‹ Simulates a circuit given a valuation for each input wire. ›
 fun simulate where
-  "simulate (AND c1 c2) \<rho> = ((simulate c1 \<rho>) \<and> (simulate c2 \<rho>))"
-| "simulate (OR c1 c2) \<rho> = ((simulate c1 \<rho>) \<or> (simulate c2 \<rho>))"
-| "simulate (NAND c1 c2) \<rho> = (\<not> ((simulate c1 \<rho>) \<and> (simulate c2 \<rho>)))"
-| "simulate (NOT c) \<rho> = (\<not> (simulate c \<rho>))"
-| "simulate TRUE \<rho> = True"
-| "simulate FALSE \<rho> = False"
-| "simulate (INPUT i) \<rho> = \<rho> i"
+  "simulate (AND c1 c2) ρ = ((simulate c1 ρ) ∧ (simulate c2 ρ))"
+| "simulate (OR c1 c2) ρ = ((simulate c1 ρ) ∨ (simulate c2 ρ))"
+| "simulate (NAND c1 c2) ρ = (¬ ((simulate c1 ρ) ∧ (simulate c2 ρ)))"
+| "simulate (NOT c) ρ = (¬ (simulate c ρ))"
+| "simulate TRUE ρ = True"
+| "simulate FALSE ρ = False"
+| "simulate (INPUT i) ρ = ρ i"
 
-text \<open> Equivalence between circuits. \<close>
-fun circuits_equiv (infix "\<sim>" 50) where
-  "c1 \<sim> c2 = (\<forall>\<rho>. simulate c1 \<rho> = simulate c2 \<rho>)"
+text ‹ Equivalence between circuits. ›
+fun circuits_equiv (infix "∼" 50) where
+  "c1 ∼ c2 = (∀ρ. simulate c1 ρ = simulate c2 ρ)"
 
-text \<open> A transformation that replaces AND/OR/NOT gates with NAND gates. \<close>
+text ‹ A transformation that replaces AND/OR/NOT gates with NAND gates. ›
 fun intro_nand where
   "intro_nand (AND c1 c2) = 
          NAND (NAND (intro_nand c1) (intro_nand c2)) TRUE"
@@ -36,29 +36,52 @@ fun intro_nand where
          NAND (intro_nand c1) (intro_nand c2))"
 | "intro_nand (NOT c) = NAND (intro_nand c) TRUE"
 | "intro_nand TRUE = TRUE"
-| "intro_nand FALSE = NAND TRUE FALSE"
+| "intro_nand FALSE = FALSE" (* Bug here *)
 | "intro_nand (INPUT i) = INPUT i"
 
-
-text \<open> The intro_nand transformation is sound. Note that there is a 
-  (deliberate) bug in the definition above, which you will need to fix 
-  before you can prove the theorem below.\<close>
-theorem intro_nand_is_sound: "intro_nand c \<sim> c"
-  oops
-
-text \<open> The only_nands predicate holds if a circuit contains only NAND gates. \<close>
-fun only_nands where
-  "only_nands (NAND c1 c2) = (only_nands c1 \<and> only_nands c2)"
-| "only_nands (INPUT _) = True"
-| "only_nands _ = False"
-
-text \<open> The output of the intro_nand transformation is a circuit that only
+text ‹ The output of the intro_nand transformation is a circuit that only
   contains NAND gates. Note that there is a (deliberate) bug in the
   definition above, which you will need to fix before you can prove the
-  theorem below. \<close>
-theorem intro_nand_only_produces_nands:
-  "only_nands (intro_nand c)"
-  oops
+  theorem below. ›
+theorem intro_nand_is_sound: "intro_nand c ∼ c"
+  by (induct c) auto
+
+text ‹ The only_nands predicate holds if a circuit contains only NAND gates. ›
+fun only_nands where
+  "only_nands (NAND c1 c2) = (only_nands c1 ∧ only_nands c2)"
+| "only_nands (INPUT _) = True"
+| "only_nands _ = True" (* Bug here *)
+
+text ‹ The output of the intro_nand transformation is a circuit that only
+  contains NAND gates. Note that there is a (deliberate) bug in the
+  definition above, which you will need to fix before you can prove the
+  theorem below. ›
+theorem intro_nand_only_produces_nands: "only_nands (intro_nand c)"
+  by (induct c) auto
+
+(*ALTERNATIVE*)
+  (* proof (induction c)
+  case TRUE
+  then show ?case by simp
+next
+  case FALSE
+  then show ?case by simp
+next
+  case (INPUT x)
+  then show ?case by simp
+next
+  case (AND c1 c2)
+  then show ?case by simp
+next
+  case (OR c1 c2)
+  then show ?case by simp
+next
+  case (NOT c)
+  then show ?case by simp
+next
+  case (NAND c1 c2)
+  then show ?case by simp
+qed *)
 
 section \<open> Task 2: Converting numbers to lists of digits. \<close>
 
