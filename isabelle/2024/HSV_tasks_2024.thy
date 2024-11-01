@@ -59,19 +59,19 @@ text \<open> The output of the intro_nand transformation is a circuit that only
 theorem intro_nand_only_produces_nands: "only_nands (intro_nand c)"
   by (induct c, auto)
 
-section ‹ Task 2: Converting numbers to lists of digits. ›
+section \<open> Task 2: Converting numbers to lists of digits. \<close>
 
-text ‹ Turns a natural number into a list of digits in reverse order. ›
-fun digits10 :: "nat ⇒ nat list"
+text \<open> Turns a natural number into a list of digits in reverse order. \<close>
+fun digits10 :: "nat \<Rightarrow> nat list"
 where
   "digits10 n = (if n < 10 then [n] else (n mod 10) # digits10 (n div 10))"
 
 value "digits10 42"
 
-lemma digits10_all_below_10_helper: "ds = digits10 n ⟹ ∀d ∈ set ds. d < 10"
+lemma digits10_all_below_10_helper: "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10"
 proof -
-  have tmp: "∀v ∈ set (digits10 n). v < 10"
-  proof (induct n rule: digits10.induct[of "λn. ∀v ∈ set (digits10 n). v < 10"])
+  have "\<forall>v \<in> set (digits10 n). v < 10"
+  proof (induct n rule: digits10.induct[of "\<lambda>n. \<forall>v \<in> set (digits10 n). v < 10"])
   case (1 n)
     then show ?case
       proof (cases "n < 10")
@@ -82,13 +82,13 @@ proof -
         then show ?thesis by (metis "1" digits10.elims insertE list.set(2) mod_less_divisor zero_less_numeral)
     qed
   qed
-  from tmp show "ds = digits10 n ⟹ ∀d ∈ set ds. d < 10" by blast
+  then show "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10" by blast
 qed
 
-text ‹ Every digit is less than 10. ›
+text \<open> Every digit is less than 10. \<close>
 corollary
-  "∀d ∈ set (digits10 n). d < 10"
-  using digits10_all_below_10_helper by blast
+  "\<forall>d \<in> set (digits10 n). d < 10"
+  using digits10_all_below_10_helper try by blast
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
