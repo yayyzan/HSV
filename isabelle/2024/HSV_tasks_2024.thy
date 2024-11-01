@@ -1,8 +1,8 @@
 theory HSV_tasks_2024 imports Main begin
 
-section ‹ Task 1: Extending our circuit synthesiser with NAND gates. ›
+section \<open> Task 1: Extending our circuit synthesiser with NAND gates. \<close>
 
-text ‹ Datatype for representing simple circuits, extended with NAND gates. ›
+text \<open> Datatype for representing simple circuits, extended with NAND gates. \<close>
 datatype "circuit" = 
   NOT "circuit"
 | AND "circuit" "circuit"
@@ -12,21 +12,21 @@ datatype "circuit" =
 | FALSE
 | INPUT "int"
 
-text ‹ Simulates a circuit given a valuation for each input wire. ›
+text \<open> Simulates a circuit given a valuation for each input wire. \<close>
 fun simulate where
-  "simulate (AND c1 c2) ρ = ((simulate c1 ρ) ∧ (simulate c2 ρ))"
-| "simulate (OR c1 c2) ρ = ((simulate c1 ρ) ∨ (simulate c2 ρ))"
-| "simulate (NAND c1 c2) ρ = (¬ ((simulate c1 ρ) ∧ (simulate c2 ρ)))"
-| "simulate (NOT c) ρ = (¬ (simulate c ρ))"
-| "simulate TRUE ρ = True"
-| "simulate FALSE ρ = False"
-| "simulate (INPUT i) ρ = ρ i"
+  "simulate (AND c1 c2) \<rho> = ((simulate c1 \<rho>) \<and> (simulate c2 \<rho>))"
+| "simulate (OR c1 c2) \<rho> = ((simulate c1 \<rho>) \<or> (simulate c2 \<rho>))"
+| "simulate (NAND c1 c2) \<rho> = (\<not> ((simulate c1 \<rho>) \<and> (simulate c2 \<rho>)))"
+| "simulate (NOT c) \<rho> = (\<not> (simulate c \<rho>))"
+| "simulate TRUE \<rho> = True"
+| "simulate FALSE \<rho> = False"
+| "simulate (INPUT i) \<rho> = \<rho> i"
 
-text ‹ Equivalence between circuits. ›
-fun circuits_equiv (infix "∼" 50) where
-  "c1 ∼ c2 = (∀ρ. simulate c1 ρ = simulate c2 ρ)"
+text \<open> Equivalence between circuits. \<close>
+fun circuits_equiv (infix "\<sim>" 50) where
+  "c1 \<sim> c2 = (\<forall>\<rho>. simulate c1 \<rho> = simulate c2 \<rho>)"
 
-text ‹ A transformation that replaces AND/OR/NOT gates with NAND gates. ›
+text \<open> A transformation that replaces AND/OR/NOT gates with NAND gates. \<close>
 fun intro_nand where
   "intro_nand (AND c1 c2) = 
          NAND (NAND (intro_nand c1) (intro_nand c2)) TRUE"
@@ -39,49 +39,25 @@ fun intro_nand where
 | "intro_nand FALSE = FALSE" (* Bug here *)
 | "intro_nand (INPUT i) = INPUT i"
 
-text ‹ The output of the intro_nand transformation is a circuit that only
+text \<open> The output of the intro_nand transformation is a circuit that only
   contains NAND gates. Note that there is a (deliberate) bug in the
   definition above, which you will need to fix before you can prove the
-  theorem below. ›
-theorem intro_nand_is_sound: "intro_nand c ∼ c"
-  by (induct c) auto
+  theorem below. \<close>
+theorem intro_nand_is_sound: "intro_nand c \<sim> c"
+  by (induct c, auto) 
 
-text ‹ The only_nands predicate holds if a circuit contains only NAND gates. ›
+text \<open> The only_nands predicate holds if a circuit contains only NAND gates. \<close>
 fun only_nands where
-  "only_nands (NAND c1 c2) = (only_nands c1 ∧ only_nands c2)"
+  "only_nands (NAND c1 c2) = (only_nands c1 \<and> only_nands c2)"
 | "only_nands (INPUT _) = True"
 | "only_nands _ = True" (* Bug here *)
 
-text ‹ The output of the intro_nand transformation is a circuit that only
+text \<open> The output of the intro_nand transformation is a circuit that only
   contains NAND gates. Note that there is a (deliberate) bug in the
   definition above, which you will need to fix before you can prove the
-  theorem below. ›
+  theorem below. \<close>
 theorem intro_nand_only_produces_nands: "only_nands (intro_nand c)"
-  by (induct c) auto
-
-(*ALTERNATIVE*)
-  (* proof (induction c)
-  case TRUE
-  then show ?case by simp
-next
-  case FALSE
-  then show ?case by simp
-next
-  case (INPUT x)
-  then show ?case by simp
-next
-  case (AND c1 c2)
-  then show ?case by simp
-next
-  case (OR c1 c2)
-  then show ?case by simp
-next
-  case (NOT c)
-  then show ?case by simp
-next
-  case (NAND c1 c2)
-  then show ?case by simp
-qed *)
+  by (induct c, auto)
 
 section \<open> Task 2: Converting numbers to lists of digits. \<close>
 
@@ -92,15 +68,24 @@ where
 
 value "digits10 42"
 
+lemma tmp_lma: "\<forall>d \<in> set (digits10 n). d < 10" 
+proof (induct rule: digits10.induct[of "\<lambda>n. \<forall>d \<in> set (digits10 n). d < 10"])
+case (1 n)
+  then show ?case by (metis One_nat_def add.commute 
+    digits10.elims in_set_conv_nth insertE less_Suc0 
+    list.set(2) list.size(3) list.size(4) mod_less_divisor nth_Cons_0 
+    plus_1_eq_Suc zero_less_numeral) 
+qed
+
+
 text \<open> Every digit is less than 10 (helper lemma). \<close>
-lemma digits10_all_below_10_helper: 
-  "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10"
-  oops
+lemma digits10_all_below_10_helper: "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10"
+using tmp_lma by blast
 
 text \<open> Every digit is less than 10. \<close>
 corollary 
   "\<forall>d \<in> set (digits10 n). d < 10" 
-  oops
+  using digits10_all_below_10_helper try by blast  
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
@@ -108,14 +93,13 @@ text \<open> A function that converts a list of digits back into a natural numbe
 fun sum10 :: "nat list \<Rightarrow> nat"
 where
   "sum10 [] = 0"
-| "sum10 (d # ds) = d + 10 * sum10 ds"
+| "sum10 (d # ds) = d + 10 * sum10 ds" (*head # tail*)
 
 value "sum10 [2,4]"
 
 text \<open> Applying digits10 then sum10 gets you back to the same number. \<close>
-theorem digits10_sum10_inverse: 
-  "sum10 (digits10 n) = n"
-  oops
+theorem digits10_sum10_inverse: "sum10 (digits10 n) = n"
+  sorry
 
 section \<open> Task 4: A divisibility theorem. \<close>
 
