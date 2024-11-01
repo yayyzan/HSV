@@ -88,7 +88,7 @@ qed
 text \<open> Every digit is less than 10. \<close>
 corollary
   "\<forall>d \<in> set (digits10 n). d < 10"
-  using digits10_all_below_10_helper try by blast
+  using digits10_all_below_10_helper by blast
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
@@ -104,10 +104,11 @@ text \<open> Applying digits10 then sum10 gets you back to the same number. \<cl
 theorem digits10_sum10_inverse: "sum10 (digits10 n) = n"
   sorry
 
-section \<open> Task 4: A divisibility theorem. \<close>
+section ‹ Task 4: A divisibility theorem. ›
 
-section \<open> Task 5: Verifying a naive SAT solver. \<close>
+theorem t4: assumes "a ∈ {1..9}" "b ∈ {1..9}" shows "((sum10 [b, a, b, a, b, a]) mod 37) = 0" by simp 
 
+section ‹ Task 5: Verifying a naive SAT solver. ›
 text \<open> This function can be used with List.fold to simulate a do-until loop. \<close>
 definition until :: "('a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'a option \<Rightarrow> 'a option"
   where
