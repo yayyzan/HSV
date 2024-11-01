@@ -70,7 +70,7 @@ value "digits10 42"
 
 lemma digits10_all_below_10_helper: "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10"
 proof -
-  have "\<forall>v \<in> set (digits10 n). v < 10"
+  have"\<forall>v \<in> set (digits10 n). v < 10"
   proof (induct n rule: digits10.induct[of "\<lambda>n. \<forall>v \<in> set (digits10 n). v < 10"])
   case (1 n)
     then show ?case
@@ -88,7 +88,7 @@ qed
 text \<open> Every digit is less than 10. \<close>
 corollary
   "\<forall>d \<in> set (digits10 n). d < 10"
-  using digits10_all_below_10_helper by blast
+  using digits10_all_below_10_helper try by blast
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
@@ -254,14 +254,14 @@ text \<open> If the naive SAT solver returns a valuation, then that
 theorem naive_solve_correct_sat:
   assumes "naive_solve q = Some \<rho>"
   shows "evaluate q \<rho>"
-  oops
+  by (metis assms naive_solve_def until_none_some) 
 
 text \<open> If the naive SAT solver returns no valuation, then none of the valuations
   it tried make the query true. \<close>
 theorem naive_solve_correct_unsat:
   assumes "naive_solve q = None"
   shows "\<forall>\<rho> \<in> set (mk_valuation_list (symbol_list q)). \<not> evaluate q \<rho>"
-  oops
+  by (metis assms list.pred_set naive_solve_def until_none)
 
 section \<open> Task 6: Verifying a simple SAT solver. \<close>
 
