@@ -3,7 +3,7 @@ theory HSV_tasks_2024 imports Main begin
 section \<open> Task 1: Extending our circuit synthesiser with NAND gates. \<close>
 
 text \<open> Datatype for representing simple circuits, extended with NAND gates. \<close>
-datatype "circuit" = 
+datatype "circuit" =
   NOT "circuit"
 | AND "circuit" "circuit"
 | OR "circuit" "circuit"
@@ -28,9 +28,9 @@ fun circuits_equiv (infix "\<sim>" 50) where
 
 text \<open> A transformation that replaces AND/OR/NOT gates with NAND gates. \<close>
 fun intro_nand where
-  "intro_nand (AND c1 c2) = 
+  "intro_nand (AND c1 c2) =
          NAND (NAND (intro_nand c1) (intro_nand c2)) TRUE"
-| "intro_nand (OR c1 c2) = 
+| "intro_nand (OR c1 c2) =
          NAND (NAND (intro_nand c1) TRUE) (NAND (intro_nand c2) TRUE)"
 | "intro_nand (NAND c1 c2) = (
          NAND (intro_nand c1) (intro_nand c2))"
@@ -44,13 +44,13 @@ text \<open> The output of the intro_nand transformation is a circuit that only
   definition above, which you will need to fix before you can prove the
   theorem below. \<close>
 theorem intro_nand_is_sound: "intro_nand c \<sim> c"
-  by (induct c, auto) 
+  by (induct c, auto)
 
 text \<open> The only_nands predicate holds if a circuit contains only NAND gates. \<close>
 fun only_nands where
   "only_nands (NAND c1 c2) = (only_nands c1 \<and> only_nands c2)"
 | "only_nands (INPUT _) = True"
-| "only_nands _ = True" (* Bug here *)
+| "only_nands _ = True"
 
 text \<open> The output of the intro_nand transformation is a circuit that only
   contains NAND gates. Note that there is a (deliberate) bug in the
@@ -59,33 +59,36 @@ text \<open> The output of the intro_nand transformation is a circuit that only
 theorem intro_nand_only_produces_nands: "only_nands (intro_nand c)"
   by (induct c, auto)
 
-section \<open> Task 2: Converting numbers to lists of digits. \<close>
+section ‹ Task 2: Converting numbers to lists of digits. ›
 
-text \<open> Turns a natural number into a list of digits in reverse order. \<close>
-fun digits10 :: "nat \<Rightarrow> nat list"
+text ‹ Turns a natural number into a list of digits in reverse order. ›
+fun digits10 :: "nat ⇒ nat list"
 where
   "digits10 n = (if n < 10 then [n] else (n mod 10) # digits10 (n div 10))"
 
 value "digits10 42"
 
-lemma tmp_lma: "\<forall>d \<in> set (digits10 n). d < 10" 
-proof (induct rule: digits10.induct[of "\<lambda>n. \<forall>d \<in> set (digits10 n). d < 10"])
-case (1 n)
-  then show ?case by (metis One_nat_def add.commute 
-    digits10.elims in_set_conv_nth insertE less_Suc0 
-    list.set(2) list.size(3) list.size(4) mod_less_divisor nth_Cons_0 
-    plus_1_eq_Suc zero_less_numeral) 
+lemma digits10_all_below_10_helper: "ds = digits10 n ⟹ ∀d ∈ set ds. d < 10"
+proof -
+  have tmp: "∀v ∈ set (digits10 n). v < 10"
+  proof (induct n rule: digits10.induct[of "λn. ∀v ∈ set (digits10 n). v < 10"])
+  case (1 n)
+    then show ?case
+      proof (cases "n < 10")
+      case True
+        then show ?thesis by simp
+      next
+      case False
+        then show ?thesis by (metis "1" digits10.elims insertE list.set(2) mod_less_divisor zero_less_numeral)
+    qed
+  qed
+  from tmp show "ds = digits10 n ⟹ ∀d ∈ set ds. d < 10" by blast
 qed
 
-
-text \<open> Every digit is less than 10 (helper lemma). \<close>
-lemma digits10_all_below_10_helper: "ds = digits10 n \<Longrightarrow> \<forall>d \<in> set ds. d < 10"
-using tmp_lma by blast
-
-text \<open> Every digit is less than 10. \<close>
-corollary 
-  "\<forall>d \<in> set (digits10 n). d < 10" 
-  using digits10_all_below_10_helper try by blast  
+text ‹ Every digit is less than 10. ›
+corollary
+  "∀d ∈ set (digits10 n). d < 10"
+  using digits10_all_below_10_helper try by blast
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
@@ -106,9 +109,9 @@ section \<open> Task 4: A divisibility theorem. \<close>
 section \<open> Task 5: Verifying a naive SAT solver. \<close>
 
 text \<open> This function can be used with List.fold to simulate a do-until loop. \<close>
-definition until :: "('a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'a option \<Rightarrow> 'a option" 
+definition until :: "('a \<Rightarrow> bool) \<Rightarrow> 'a \<Rightarrow> 'a option \<Rightarrow> 'a option"
   where
-  "until p x z == if z = None then if p x then Some x else None else z" 
+  "until p x z == if z = None then if p x then Some x else None else z"
 
 text \<open> Once the loop condition holds, the return value is fixed. \<close>
 lemma until_some: "fold (until p) xs (Some z) = Some z"
@@ -127,14 +130,14 @@ next
     hence "until p a None = Some a" by (simp add: until_def)
     hence "fold (until p) xs (Some a) = None" using * by presburger
     hence False using until_some by (metis option.distinct(1))
-  } 
+  }
   moreover {
     assume "\<not> p a"
     hence "until p a None = None" by (simp add: until_def)
     hence "fold (until p) xs None = None" using * by presburger
     hence "list_all (\<lambda>x. \<not> p x) xs" by (rule Cons.hyps)
     hence ?case by (simp add: `\<not> p a`)
-  } 
+  }
   ultimately show ?case by blast
 qed
 
@@ -148,16 +151,16 @@ next
   hence *: "fold (until p) xs (until p a None) = Some x" by simp
   {
     assume "p a"
-    hence "until p a None = Some a" by (simp add: until_def) 
+    hence "until p a None = Some a" by (simp add: until_def)
     hence "a = x" by (metis * option.inject until_some)
     hence "p x \<and> List.member (a # xs) x" using `p a` in_set_member by force
-  } 
+  }
   moreover {
     assume "\<not> p a"
     hence "until p a None = None" by (simp add: until_def)
     hence "fold (until p) xs None = Some x" using * by presburger
     hence "p x \<and> List.member (a # xs) x" using Cons.hyps by (simp add: member_rec(1))
-  } 
+  }
   ultimately show ?case by blast
 qed
 
@@ -178,12 +181,12 @@ type_synonym query = "clause list"
 
 text \<open> Given a valuation, evaluate a clause to its truth value. \<close>
 definition evaluate_clause :: "valuation \<Rightarrow> clause \<Rightarrow> bool"
-where 
+where
   "evaluate_clause \<rho> c = list_ex (List.member \<rho>) c"
 
 text \<open> Given a valuation, evaluate a query to its truth value. \<close>
 definition evaluate :: "query \<Rightarrow> valuation \<Rightarrow> bool"
-where 
+where
   "evaluate q \<rho> = list_all (evaluate_clause \<rho>) q"
 
 text \<open> Some sample queries and valuations. \<close>
@@ -198,15 +201,15 @@ definition "q4 == [[(''b'', False), (''a'', True)]]"
 definition "\<rho>1 == [(''a'', True), (''b'', True), (''c'', False)]"
 definition "\<rho>2 == [(''a'', False), (''b'', True), (''c'', True)]"
 
-value "evaluate q1 \<rho>1" 
+value "evaluate q1 \<rho>1"
 value "evaluate q1 \<rho>2"
 
 text \<open> Construct the list of all possible valuations over the given symbols. \<close>
 fun mk_valuation_list :: "symbol list \<Rightarrow> valuation list"
-where 
+where
   "mk_valuation_list [] = [[]]"
 | "mk_valuation_list (x # xs) = (
-     let \<rho>s = mk_valuation_list xs in 
+     let \<rho>s = mk_valuation_list xs in
      map ((#) (x, True)) \<rho>s @ map ((#) (x, False)) \<rho>s)"
 
 value "mk_valuation_list [''a'',''b'']"
@@ -218,7 +221,7 @@ where
 
 text \<open> Extract the list of symbols from the given clause. \<close>
 definition symbol_list_clause :: "clause \<Rightarrow> symbol list"
-where 
+where
   "symbol_list_clause c == remdups (map symbol_of_literal c)"
 
 text \<open> Extract the list of symbols from the given query. \<close>
@@ -236,8 +239,8 @@ text \<open> A naive SAT solver. It works by constructing the list of all
   true, it returns None. \<close>
 definition naive_solve :: "query \<Rightarrow> valuation option"
 where
-  "naive_solve q == 
-  let xs = symbol_list q in 
+  "naive_solve q ==
+  let xs = symbol_list q in
   let \<rho>s = mk_valuation_list xs in
   List.fold (until (evaluate q)) \<rho>s None"
 
@@ -246,27 +249,27 @@ value "naive_solve q2"
 value "naive_solve q3"
 value "naive_solve q4"
 
-text \<open> If the naive SAT solver returns a valuation, then that 
+text \<open> If the naive SAT solver returns a valuation, then that
   valuation really does make the query true. \<close>
 theorem naive_solve_correct_sat:
   assumes "naive_solve q = Some \<rho>"
   shows "evaluate q \<rho>"
   oops
 
-text \<open> If the naive SAT solver returns no valuation, then none of the valuations 
+text \<open> If the naive SAT solver returns no valuation, then none of the valuations
   it tried make the query true. \<close>
 theorem naive_solve_correct_unsat:
   assumes "naive_solve q = None"
-  shows "\<forall>\<rho> \<in> set (mk_valuation_list (symbol_list q)). \<not> evaluate q \<rho>" 
+  shows "\<forall>\<rho> \<in> set (mk_valuation_list (symbol_list q)). \<not> evaluate q \<rho>"
   oops
 
 section \<open> Task 6: Verifying a simple SAT solver. \<close>
 
 text \<open> Update the clause c by fixing the symbol x to have truth-value b. Recall that a clause is
   a disjunction of literals, so the clause is true if any one of its literals is true. So if
-  the clause contains the literal (x,b), which is fixed to be true, then the whole clause 
-  becomes true and can be completely removed (replaced with the empty list). And if the clause 
-  contains the literal (x, \<not>b), which is fixed to be false, then that literal should be removed 
+  the clause contains the literal (x,b), which is fixed to be true, then the whole clause
+  becomes true and can be completely removed (replaced with the empty list). And if the clause
+  contains the literal (x, \<not>b), which is fixed to be false, then that literal should be removed
   from the clause. \<close>
 definition update_clause :: "symbol \<Rightarrow> bool \<Rightarrow> clause \<Rightarrow> clause list"
 where
@@ -291,7 +294,7 @@ value "update_query ''b'' False q1"
 
 text \<open> Extract the set of symbols that appear in a given clause. \<close>
 definition symbols_clause :: "clause \<Rightarrow> symbol set"
-where 
+where
   "symbols_clause c \<equiv> set (map symbol_of_literal c)"
 
 text \<open> Extract the set of symbols that appear in a given query. \<close>
@@ -302,11 +305,11 @@ where
 value "symbols q1"
 value "symbols q2"
 
-text \<open> A simple SAT solver. Given a query, it does a three-way case split. If 
+text \<open> A simple SAT solver. Given a query, it does a three-way case split. If
   the query has no clauses then it is trivially satisfiable (with the
    empty valuation). If the first clause in the query is empty, then the
-   query is unsatisfiable. Otherwise, it considers the first symbol that 
-   appears in the query, and makes two recursive solving attempts: one 
+   query is unsatisfiable. Otherwise, it considers the first symbol that
+   appears in the query, and makes two recursive solving attempts: one
    with that symbol evaluated to true, and one with it evaluated to false.
    If neither recursive attempt succeeds, the query is deemed unsatisfiable. \<close>
 function simp_solve :: "query \<Rightarrow> valuation option"
@@ -319,11 +322,11 @@ where
      case simp_solve (update_query x True q) of
        Some \<rho> \<Rightarrow> Some ((x, True) # \<rho>)
      | None \<Rightarrow> (
-       case simp_solve (update_query x False q) of 
+       case simp_solve (update_query x False q) of
          Some \<rho> \<Rightarrow> Some ((x, False) # \<rho>)
        | None \<Rightarrow> None)))"
 by pat_completeness auto
-termination 
+termination
   sorry
 
 value "simp_solve q1"
@@ -336,12 +339,12 @@ definition domain :: "('a * 'b) list \<Rightarrow> 'a set"
 where
   "domain kvs = set (map fst kvs)"
 
-lemma evaluate_update_query: 
+lemma evaluate_update_query:
   assumes "x \<notin> domain \<rho>"
   shows "evaluate (update_query x b q) \<rho> = evaluate q ((x, b) # \<rho>)"
   oops
 
-text \<open> If the simple SAT solver returns a valuation, then that 
+text \<open> If the simple SAT solver returns a valuation, then that
   valuation really does make the query true. \<close>
 theorem simp_solve_sat_correct:
   "simp_solve q = Some \<rho> \<Longrightarrow> evaluate q \<rho>"
@@ -352,11 +355,11 @@ text \<open> A valuation is deemed well-formed (wf) as long as it does
 definition wf_valuation where
   "wf_valuation \<rho> = distinct (map fst \<rho>)"
 
-text \<open> If the simple SAT solver returns no valuation, then 
-  there exists no well-formed valuation that can make the 
+text \<open> If the simple SAT solver returns no valuation, then
+  there exists no well-formed valuation that can make the
   query evaluate to true. \<close>
 theorem simp_solve_unsat_correct:
-  "simp_solve q = None \<Longrightarrow> 
+  "simp_solve q = None \<Longrightarrow>
    (\<forall>\<rho>. wf_valuation \<rho> \<longrightarrow> \<not> evaluate q \<rho>)"
   oops
 
