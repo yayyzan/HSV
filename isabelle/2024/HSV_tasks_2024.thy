@@ -88,7 +88,7 @@ qed
 text \<open> Every digit is less than 10. \<close>
 corollary
   "\<forall>d \<in> set (digits10 n). d < 10"
-  using digits10_all_below_10_helper try by blast
+  using digits10_all_below_10_helper by blast
 
 text \<open> Task 3: Converting to and from digit lists. \<close>
 
