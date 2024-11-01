@@ -102,7 +102,7 @@ value "sum10 [2,4]"
 
 text \<open> Applying digits10 then sum10 gets you back to the same number. \<close>
 theorem digits10_sum10_inverse: "sum10 (digits10 n) = n"
-  sorry
+  by (induct n rule: digits10.induct, auto)
 
 section ‹ Task 4: A divisibility theorem. ›
 
